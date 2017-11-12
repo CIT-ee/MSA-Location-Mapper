@@ -1,0 +1,6 @@
+config/
+
+.env
+
+*.swp
+*.pyc
