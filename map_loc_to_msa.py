@@ -29,6 +29,11 @@ class MSAMapper:
         url_template = self.api_endpoint_for['censusreporter']['geo']
         
         counter, census_level = 0, self.value_of_level['census'][census_name]
+
+        #  convert all column name to uppercase to keep things consistent
+        column_renamer = lambda x: x.upper() 
+        self.source_df.rename(column_renamer, axis=1, inplace=True)
+
         for index, row in self.source_df.iterrows():
             #  pdb.set_trace()
             counter += 1
