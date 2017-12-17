@@ -32,7 +32,7 @@ class MSAMapper:
 
         #  convert all column name to uppercase to keep things consistent
         column_renamer = lambda x: x.upper() 
-        self.source_df.rename(column_renamer, axis=1, inplace=True)
+        self.source_df.rename(columns=column_renamer, inplace=True)
 
         for index, row in self.source_df.iterrows():
             #  pdb.set_trace()
