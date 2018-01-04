@@ -20,7 +20,7 @@ class MSAMapper:
 
     def map_data(self, data_type='address'):
         if data_type == 'address':
-            self.source_df = self._map_addr_to_latlng()
+            self.source_df = self._map_addr_to_latlng().fillna('')
         return self._map_latlng_to_msa()
 
     def _map_latlng_to_msa(self, census_name='msa'):
@@ -28,30 +28,35 @@ class MSAMapper:
                                         + [ 'MSA_NAME', 'MSA_CODE' ])
         url_template = self.api_endpoint_for['censusreporter']['geo']
         
-        counter, census_level = 0, self.value_of_level['census'][census_name]
+        nrows, counter, census_level = self.source_df.shape[0], 0, \
+                                        self.value_of_level['census'][census_name]
 
         #  convert all column name to uppercase to keep things consistent
         column_renamer = lambda x: x.upper() 
         self.source_df.rename(columns=column_renamer, inplace=True)
 
+        print('\nConverting lat-lon coordinates to MSA data. Please wait ..')
         for index, row in self.source_df.iterrows():
-            #  pdb.set_trace()
             counter += 1
-            print('Processed {} rows..'.format(counter), end='\r', )
+            print('Processed {} out of {} rows..'.format(counter, nrows), end='\r', )
             lat, lon = row[ ['LATITUDE', 'LONGITUDE'] ].tolist()
-            query_url = url_template.format(lat=lat, lon=lon, level=census_level)
-            census_data = fetch_census_loc(query_url)
+            census_data = fetch_census_loc(lat, lon, census_level, url_template)
             target_df.loc[counter] = row.tolist() + census_data
-        return target_df
+
+        print('Converting lat-lon coordinates to MSA data completed!\n')
+        return target_df.reset_index()
     
     def _map_addr_to_latlng(self):
         target_df = pd.DataFrame(columns=self.source_df.columns.tolist() + \
                                     ['LATITUDE', 'LONGITUDE', 'CONFIDENCE'])
-        counter = 0
+        nrows, counter = self.source_df.shape[0], 0
+        print('\nConverting addresses to lat-lon coordinates. Please wait..')
+        
         for index, row in self.source_df.iterrows():
-            #  pdb.set_trace()
             counter += 1
-            print('Processed {} rows..'.format(counter), end='\r', )
-            lat, lon, confidence = fetch_lat_lon(" ".join(row.tolist()))
+            print('Processed {} out of {} rows..'.format(counter, nrows), end='\r', )
+            lat, lon, confidence = fetch_lat_lon(" ".join(row.tolist()), 0)
             target_df.loc[counter] = row.tolist() + [ lat, lon, confidence ]
-        return target_df
+        
+        print('Converting addresses to lat-lon coordinates completed!\n')
+        return target_df.reset_index()
