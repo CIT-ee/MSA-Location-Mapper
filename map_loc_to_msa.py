@@ -31,15 +31,19 @@ class MSAMapper:
         nrows, counter, census_level = self.source_df.shape[0], 0, \
                                         self.value_of_level['census'][census_name]
 
+        #  find the lat-lon columns 
+        loc_fields = [ col_name for col_name in self.source_df.columns.tolist() \
+                    if col_name.lower() in 'latitude' or col_name.lower() in 'longitude' ]
+
         #  convert all column name to uppercase to keep things consistent
-        column_renamer = lambda x: x.upper() 
-        self.source_df.rename(columns=column_renamer, inplace=True)
+        #  column_renamer = lambda x: x.upper() 
+        #  self.source_df.rename(columns=column_renamer, inplace=True)
 
         print('\nConverting lat-lon coordinates to MSA data. Please wait ..')
         for index, row in self.source_df.iterrows():
             counter += 1
             print('Processed {} out of {} rows..'.format(counter, nrows), end='\r', )
-            lat, lon = row[ ['LATITUDE', 'LONGITUDE'] ].tolist()
+            lat, lon = row[ loc_fields ].tolist()
             census_data = fetch_census_loc(lat, lon, census_level, url_template)
             target_df.loc[counter] = row.tolist() + census_data
 
