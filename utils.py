@@ -1,4 +1,5 @@
-import requests, geocoder
+import requests, geocoder, pdb
+from time import sleep
 
 def fetch_census_loc(lat, lon, census_level, url_template):
     full_name, full_code = None, None
@@ -7,12 +8,17 @@ def fetch_census_loc(lat, lon, census_level, url_template):
     if len(" ".join(map(str, [ lat, lon ])).split()) == 2:
         url = url_template.format(lat=lat, lon=lon, level=census_level)
         res = requests.get(url)
-        payload = res.json()
 
         #  extract the MSA data if payload and response are valid
-        if res.status_code == 200 and len(payload['results']) > 0:
-            full_name = payload['results'][0]['full_name']
-            full_code = payload['results'][0]['full_geoid'][-5:]
+        if res.status_code == 200:
+            payload = res.json()
+            if len(payload['results']) > 0:
+                full_name = payload['results'][0]['full_name']
+                full_code = payload['results'][0]['full_geoid'][-5:]
+        else:
+            print(res.status_code, url)
+
+        sleep(1)
 
     return [ full_name, full_code ]
 
@@ -34,6 +40,7 @@ def fetch_lat_lon(query, retry_idx, retry_lim=50):
                 lat, lon, confidence = fetch_lat_lon(query, retry_idx + 1)
         except Exception as e:
             print('Exception occurred when query address to latlng')
-            pdb.set_trace()
+            print('Address: ', query)
+            print('Exception: ', e)
 
     return lat, lon, confidence
