@@ -1,24 +1,21 @@
 import requests, geocoder, pdb
 from time import sleep
 
-def fetch_census_loc(lat, lon, census_level, url_template):
+def fetch_census_loc(url, fields, layer_name):
     full_name, full_code = None, None
     
-    #  check if both lat and lon coordinates are available for query
-    if len(" ".join(map(str, [ lat, lon ])).split()) == 2:
-        url = url_template.format(lat=lat, lon=lon, level=census_level)
-        res = requests.get(url)
+    res = requests.get(url, params=fields)
 
-        #  extract the MSA data if payload and response are valid
-        if res.status_code == 200:
-            payload = res.json()
-            if len(payload['results']) > 0:
-                full_name = payload['results'][0]['full_name']
-                full_code = payload['results'][0]['full_geoid'][-5:]
-        else:
-            print(res.status_code, url)
-
-        sleep(1)
+    #  extract the MSA data if payload and response are valid
+    if res.status_code == 200:
+        payload = res.json()
+        census_data = payload['result']['geographies'][layer_name]
+        full_name = census_data[0]['NAME'] if len(census_data) > 0 else full_name 
+        full_code = census_data[0]['GEOID'] if len(census_data) > 0 else full_code
+    elif res.status_code == 429:
+        pdb.set_trace()
+    else:
+        print(res.status_code, url)
 
     return [ full_name, full_code ]
 

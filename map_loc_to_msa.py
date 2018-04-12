@@ -8,13 +8,12 @@ class MSAMapper:
     def __init__(self, source_df):
         self.source_df = source_df
         self.api_endpoint_for = {
-            'censusreporter':{
-                'geo': "https://api.censusreporter.org/1.0/geo/search?lat={lat}&lon={lon}&sumlevs={level}"
-            }
+            'census_geocoder': "https://geocoding.geo.census.gov/geocoder/{returntype}/{searchtype}"
         }
-        self.census_code = {
-            'msa': '310',
-            'tract': '140'
+        self.layer_code = {
+            'metsa': ( 'Metropolitan Statistical Areas', '80' ),
+            'micsa': ( 'Micropolitan Statistical Areas', '81' ),
+            'tracts': ( 'Census Tracts', '8' )
         }
 
     def map_data(self, census_name, target_fields, data_type='address'):
@@ -25,9 +24,10 @@ class MSAMapper:
     def _map_latlng_to_msa(self, census_name, target_fields):
         target_field_names = self.source_df.columns.tolist() + target_fields
         target_df = pd.DataFrame(columns=target_field_names)
-        url_template = self.api_endpoint_for['censusreporter']['geo']
+        url_template = self.api_endpoint_for['census_geocoder']
         
-        nrows, census_level = self.source_df.shape[0], self.census_code[census_name]
+        fields = { 'benchmark': 'Public_AR_Current', 'vintage': 'Current_Current', 'format': 'json' }
+        nrows, fields['layers'] = self.source_df.shape[0], self.layer_code[census_name][1]
 
         #  find the lat-lon columns
         loc_fields = [ col_name for col_name in self.source_df.columns.tolist() \
@@ -37,7 +37,9 @@ class MSAMapper:
         for _idx, (index, row) in enumerate(self.source_df.iterrows()):
             print('Processed {} out of {} rows..'.format(_idx, nrows), end='\r', )
             lat, lon = row[ sorted(loc_fields) ].tolist()
-            census_data = fetch_census_loc(lat, lon, census_level, url_template)
+            url_query = url_template.format(returntype='geographies', searchtype='coordinates')
+            fields['x'], fields['y'] = lon, lat
+            census_data = fetch_census_loc(url_query, fields, self.layer_code[census_name][0])
             target_df.loc[_idx] = row.tolist() + census_data
 
         print('Converting lat-lon coordinates to MSA data completed!\n')
