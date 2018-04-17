@@ -11,9 +11,8 @@ class MSAMapper:
             'census_geocoder': "https://geocoding.geo.census.gov/geocoder/{returntype}/{searchtype}"
         }
         self.layer_code = {
-            'metsa': ( 'Metropolitan Statistical Areas', '80' ),
-            'micsa': ( 'Micropolitan Statistical Areas', '81' ),
-            'tracts': ( 'Census Tracts', '8' )
+            'msa': ( ['NAME', 'GEOID'], '80,82' ),
+            'tracts': ( ['', 'GEOID'], '8' )
         }
 
     def map_data(self, census_name, target_fields, data_type='address'):

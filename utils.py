@@ -1,7 +1,7 @@
 import requests, geocoder, pdb
 from time import sleep
 
-def fetch_census_loc(url, fields, layer_name):
+def fetch_census_loc(url, fields, layer_fields):
     full_name, full_code = None, None
     
     res = requests.get(url, params=fields)
@@ -9,11 +9,15 @@ def fetch_census_loc(url, fields, layer_name):
     #  extract the MSA data if payload and response are valid
     if res.status_code == 200:
         payload = res.json()
-        census_data = payload['result']['geographies'][layer_name]
-        full_name = census_data[0]['NAME'] if len(census_data) > 0 else full_name 
-        full_code = census_data[0]['GEOID'] if len(census_data) > 0 else full_code
+        geographies = payload['result']['geographies']
+        for census_data in geographies.values():
+            if len(census_data):
+                full_name = census_data[0][layer_fields[0]] 
+                full_code = census_data[0][layer_fields[1]]
+
     elif res.status_code == 429:
-        pdb.set_trace()
+        print('Made too many requests')
+
     else:
         print(res.status_code, url)
 
