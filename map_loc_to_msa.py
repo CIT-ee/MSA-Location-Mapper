@@ -11,7 +11,7 @@ class MSAMapper:
             'census_geocoder': "https://geocoding.geo.census.gov/geocoder/{returntype}/{searchtype}"
         }
         self.layer_code = {
-            'msa': ( ['NAME', 'GEOID'], '80,82' ),
+            'msa': ( ['NAME', 'GEOID'], '80' ),
             'tracts': ( ['', 'GEOID'], '8' )
         }
 
